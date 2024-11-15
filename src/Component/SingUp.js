@@ -41,7 +41,7 @@ const Signup = () => {
       setConfirmPassword('');
       
       // Navigate to login page after successful signup
-      navigate('/login');
+      navigate('/todos');
     } catch (err) {
       setError(err.message);
     }
