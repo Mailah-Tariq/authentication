@@ -1,10 +1,11 @@
-
 import React, { useState } from 'react';
 import { auth, db } from '../firebaseConfig';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { doc, setDoc } from 'firebase/firestore';
-import { Form, Button, Container, Card } from 'react-bootstrap';
+import { Form, Button, Container, Card, Spinner } from 'react-bootstrap';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Signup = () => {
   const [firstName, setFirstName] = useState('');
@@ -13,6 +14,7 @@ const Signup = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -22,10 +24,11 @@ const Signup = () => {
       return;
     }
 
+    setLoading(true); // Show loader
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: `${firstName} ${lastName}` });
-      
+
       // Store user information in Firestore
       await setDoc(doc(db, 'authentication', userCredential.user.uid), {
         firstName,
@@ -33,17 +36,13 @@ const Signup = () => {
         email,
       });
 
-      // Clear the fields after successful signup
-      setFirstName('');
-      setLastName('');
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      
-      // Navigate to login page after successful signup
+      setLoading(false); // Hide loader
+      toast.success('Signup successful! Redirecting...');
       navigate('/todos');
     } catch (err) {
+      setLoading(false); // Hide loader
       setError(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -103,7 +102,9 @@ const Signup = () => {
             />
           </Form.Group>
           {error && <p className="text-danger text-center">{error}</p>}
-          <Button variant="primary" type="submit" className="w-100 mt-3">Sign Up</Button>
+          <Button variant="primary" type="submit" className="w-100 mt-3" disabled={loading}>
+            {loading ? <Spinner animation="border" size="sm" /> : 'Sign Up'}
+          </Button>
         </Form>
         <div className="text-center mt-3">
           <small className="text-muted">Already have an account?</small>
@@ -112,6 +113,7 @@ const Signup = () => {
           </Button>
         </div>
       </Card>
+      <ToastContainer position="top-center" />
     </Container>
   );
 };

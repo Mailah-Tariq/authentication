@@ -1,32 +1,38 @@
-
 import React, { useState } from 'react';
 import { auth } from '../firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
-import { Form, Button, Container, Card } from 'react-bootstrap';
+import { Form, Button, Container, Card, Spinner } from 'react-bootstrap';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Clear any previous error messages
+    setError('');
+    setLoading(true); // Show loader
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      setLoading(false); // Hide loader
+      toast.success('Login successful!');
       navigate('/todos');
     } catch (err) {
-      // Custom error handling for Firebase auth errors
+      setLoading(false); // Hide loader
       if (err.code === 'auth/user-not-found') {
         setError("You don't have an account. Please sign up.");
       } else if (err.code === 'auth/wrong-password') {
-        setError("Incorrect password. Please try again.");
+        setError('Incorrect password. Please try again.');
       } else {
-        setError("we dont have an account that matches the above. Please sign up and try again.");
+        setError('An error occurred. Please try again.');
       }
+      toast.error(error);
     }
   };
 
@@ -56,8 +62,8 @@ const Login = () => {
             />
           </Form.Group>
           {error && <p className="text-danger text-center">{error}</p>}
-          <Button variant="primary" type="submit" className="w-100 mt-3">
-            Login
+          <Button variant="primary" type="submit" className="w-100 mt-3" disabled={loading}>
+            {loading ? <Spinner animation="border" size="sm" /> : 'Login'}
           </Button>
         </Form>
         <div className="text-center mt-3">
@@ -67,6 +73,7 @@ const Login = () => {
           </Button>
         </div>
       </Card>
+      <ToastContainer position="top-center" />
     </Container>
   );
 };
